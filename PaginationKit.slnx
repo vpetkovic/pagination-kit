@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/WebApi/WebApi.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/PaginationKit.AspNetCore/PaginationKit.AspNetCore.csproj" />
+    <Project Path="src/PaginationKit.FastEndpoints/PaginationKit.FastEndpoints.csproj" />
+    <Project Path="src/PaginationKit/PaginationKit.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PaginationKit.Tests/PaginationKit.Tests.csproj" />
+  </Folder>
+</Solution>
