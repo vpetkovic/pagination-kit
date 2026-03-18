@@ -4,6 +4,18 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>PaginationKit.FastEndpoints</PackageId>
+    <Version>1.0.0</Version>
+    <Author>Vojislav Petkovic</Author>
+    <Title>PaginationKit.FastEndpoints</Title>
+    <Description>FastEndpoints adapter for PaginationKit. Generic IPreProcessor for automatic pagination extraction from query string.</Description>
+    <RepositoryUrl>https://github.com/vpetkovic/pagination-kit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>pagination;fastendpoints;preprocessor;dotnet;csharp</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
+    <PackageReleaseNotes>Initial release — PaginationPreProcessor&lt;TRequest&gt;</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +28,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PaginationKit\PaginationKit.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

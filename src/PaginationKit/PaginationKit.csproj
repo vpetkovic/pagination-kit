@@ -1,9 +1,28 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>PaginationKit</PackageId>
+    <Version>1.0.0</Version>
+    <Author>Vojislav Petkovic</Author>
+    <Title>PaginationKit</Title>
+    <Description>Framework-agnostic and reusable pagination pattern</Description>
+    <RepositoryUrl>https://github.com/vpetkovic/pagination-kit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>pagination;paging;queryable;sorting;dotnet;csharp</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
+    <PackageReleaseNotes>Initial release — core pagination options, query extensions, request contracts</PackageReleaseNotes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>

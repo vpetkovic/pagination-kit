@@ -2,6 +2,12 @@
 
 A composable .NET pagination and query toolkit. Framework-agnostic core with thin adapters for ASP.NET Core and FastEndpoints.
 
+| Package | NuGet | Version | Stats |
+| --------------- | --------------- | --------------- | --------------- |
+| `PaginationKit` | [`Install-Package PaginationKit`](https://www.nuget.org/packages/PaginationKit/) | ![Nuget](https://img.shields.io/nuget/v/PaginationKit) | ![Nuget](https://img.shields.io/nuget/dt/PaginationKit?label=%20Downloads) |
+| `PaginationKit.AspNetCore` | [`Install-Package PaginationKit.AspNetCore`](https://www.nuget.org/packages/PaginationKit.AspNetCore/) | ![Nuget](https://img.shields.io/nuget/v/PaginationKit.AspNetCore) | ![Nuget](https://img.shields.io/nuget/dt/PaginationKit.AspNetCore?label=%20Downloads) |
+| `PaginationKit.FastEndpoints` | [`Install-Package PaginationKit.FastEndpoints`](https://www.nuget.org/packages/PaginationKit.FastEndpoints/) | ![Nuget](https://img.shields.io/nuget/v/PaginationKit.FastEndpoints) | ![Nuget](https://img.shields.io/nuget/dt/PaginationKit.FastEndpoints?label=%20Downloads) |
+
 ## Why
 
 Every project I've worked on needed pagination, and every single one had its own implementation. Copy-pasted Skip/Take logic, hand-rolled page calculations, pagination headers built differently each time. None of it was reusable across projects.
