@@ -1,6 +1,6 @@
 # PaginationKit
 
-A composable .NET pagination and query toolkit. Framework-agnostic core with thin adapters for ASP.NET Core and FastEndpoints.
+A composable .NET pagination and query toolkit with **offset-based** and **cursor-based** pagination. Framework-agnostic core with thin adapters for ASP.NET Core and FastEndpoints.
 
 | Package | NuGet | Version | Stats |
 | --------------- | --------------- | --------------- | --------------- |
@@ -17,8 +17,10 @@ PaginationKit extracts the patterns I kept rebuilding into a single library with
 It separates concerns into composable pieces:
 
 - **Core** (`PaginationKit`) — Pure .NET. No ASP.NET dependency. Works anywhere you have `IQueryable<T>`.
-- **ASP.NET Core adapter** (`PaginationKit.AspNetCore`) — Pagination filter, response headers, endpoint builder extensions.
+- **ASP.NET Core adapter** (`PaginationKit.AspNetCore`) — Pagination filters, response headers, endpoint builder extensions.
 - **FastEndpoints adapter** (`PaginationKit.FastEndpoints`) — Generic `IPreProcessor<TRequest>` for FastEndpoints.
+
+Both **offset/page-based** (traditional page numbers) and **cursor/keyset-based** (infinite scroll, feeds, large datasets) pagination are supported with the same smart defaults pattern.
 
 ## Packages
 
@@ -28,7 +30,7 @@ It separates concerns into composable pieces:
 | `PaginationKit.AspNetCore` | MVC + Minimal API filter, headers, validation | Core + ASP.NET Core + FluentValidation |
 | `PaginationKit.FastEndpoints` | PreProcessor adapter | Core + FastEndpoints |
 
-## Quick Start
+## Quick Start — Offset Pagination
 
 ### 1. Pagination Options
 
@@ -160,9 +162,167 @@ public class ProductRepository
 
 The repository only depends on `PaginationKit` (core) — it has no idea it's running behind an ASP.NET endpoint.
 
-## Response Headers
+## Quick Start — Cursor Pagination
 
-When pagination is active, the following headers are added:
+Cursor-based pagination uses an opaque token instead of page numbers. It's ideal for infinite scroll, real-time feeds, and large datasets where offset performance degrades.
+
+### 1. Cursor Pagination Options
+
+```csharp
+using PaginationKit;
+
+// Required cursor pagination — defaults to limit 10
+var opts = CursorPaginationOptions.Create(PaginationRequirement.Required);
+// opts.Cursor = null (first page), opts.Limit = 10, opts.IsPaginated = true
+
+// With explicit cursor and limit
+var opts2 = CursorPaginationOptions.Create(
+    PaginationRequirement.Required, cursor: "abc123", limit: 25);
+// opts2.Cursor = "abc123", opts2.Limit = 25
+
+// Backward traversal (previous page)
+var opts3 = CursorPaginationOptions.Create(
+    PaginationRequirement.Required, cursor: "xyz", limit: 10,
+    direction: CursorDirection.Backward);
+
+// Optional — only paginates if cursor or limit is provided
+var opts4 = CursorPaginationOptions.Create(PaginationRequirement.Optional);
+// opts4.IsPaginated = false (no params given)
+```
+
+### 2. Cursor Query Extension
+
+```csharp
+using PaginationKit.Extensions;
+
+// Filter to items after a cursor value — works with any IComparable<T> key
+var results = query
+    .OrderBy(x => x.Id)
+    .AfterCursor(x => x.Id, lastSeenId)
+    .Take(limit);
+
+// With DateTime cursor
+var results = query
+    .OrderBy(x => x.CreatedAt)
+    .AfterCursor(x => x.CreatedAt, lastSeenDate)
+    .Take(limit);
+
+// Backward (previous page)
+var results = query
+    .OrderByDescending(x => x.Id)
+    .AfterCursor(x => x.Id, firstSeenId, CursorDirection.Backward)
+    .Take(limit);
+```
+
+### 3. ASP.NET Core Minimal API (Cursor)
+
+```csharp
+using PaginationKit;
+using PaginationKit.AspNetCore;
+using PaginationKit.Extensions;
+
+app.MapGet("/feed", (HttpContext ctx) =>
+{
+    var paging = ctx.GetCursorPaginationOptions();
+    var query = db.Posts.OrderBy(p => p.Id).AsQueryable();
+
+    // Decode cursor (you know your key type)
+    if (paging.Cursor is not null)
+    {
+        var afterId = int.Parse(paging.Cursor);
+        query = query.AfterCursor(p => p.Id, afterId);
+    }
+
+    // Fetch limit + 1 to detect if there are more results
+    var items = query.Take(paging.Limit + 1).ToList();
+    var hasMore = items.Count > paging.Limit;
+    if (hasMore) items.RemoveAt(items.Count - 1);
+
+    var nextCursor = hasMore ? items.Last().Id.ToString() : null;
+    CursorPaginationHeaders.Write(ctx, paging, nextCursor);
+
+    return Results.Ok(items);
+})
+.CursorPagination(PaginationRequirement.Required, limit: 25);
+// Reads ?cursor=&limit=&direction= from query string
+```
+
+### 4. ASP.NET Core MVC Controller (Cursor)
+
+```csharp
+[HttpGet]
+[CursorPaginationFilter(PaginationRequirement.Required, 25)]
+public IActionResult GetFeed()
+{
+    var paging = HttpContext.GetCursorPaginationOptions();
+    // ... same pattern
+}
+```
+
+### 5. FastEndpoints (Cursor)
+
+```csharp
+using PaginationKit.FastEndpoints;
+
+public class GetFeedEndpoint : Endpoint<GetFeedRequest, List<Post>>
+{
+    public override void Configure()
+    {
+        Get("/feed");
+        PreProcessors(new CursorPaginationPreProcessor<GetFeedRequest>(PaginationRequirement.Required, 25));
+    }
+}
+```
+
+### 6. Passing Cursor Pagination to Infrastructure
+
+```csharp
+// Endpoint (API layer)
+app.MapGet("/feed", (HttpContext ctx, PostRepository repo) =>
+{
+    var paging = ctx.GetCursorPaginationOptions();
+    var (items, nextCursor) = repo.GetFeed(paging);
+
+    CursorPaginationHeaders.Write(ctx, paging, nextCursor);
+    return Results.Ok(items);
+})
+.CursorPagination(PaginationRequirement.Required, limit: 25);
+```
+
+```csharp
+// Repository (Infrastructure layer)
+using PaginationKit.Contracts;
+using PaginationKit.Extensions;
+
+public class PostRepository
+{
+    private readonly AppDbContext _db;
+
+    public PostRepository(AppDbContext db) => _db = db;
+
+    public (List<Post> items, string? nextCursor) GetFeed(ICursorPaginationOptions paging)
+    {
+        var query = _db.Posts.OrderBy(p => p.Id).AsQueryable();
+
+        if (paging.Cursor is not null)
+        {
+            var afterId = int.Parse(paging.Cursor);
+            query = query.AfterCursor(p => p.Id, afterId, paging.Direction);
+        }
+
+        var items = query.Take(paging.Limit + 1).ToList();
+        var hasMore = items.Count > paging.Limit;
+        if (hasMore) items.RemoveAt(items.Count - 1);
+
+        var nextCursor = hasMore ? items.Last().Id.ToString() : null;
+        return (items, nextCursor);
+    }
+}
+```
+
+## Response Headers — Offset Pagination
+
+When offset pagination is active, the following headers are added:
 
 | Header | Example | Description |
 |--------|---------|-------------|
@@ -171,6 +331,19 @@ When pagination is active, the following headers are added:
 | `X-Pagination-PageCount` | `5` | Total number of pages |
 | `X-Pagination-TotalCount` | `47` | Total items across all pages |
 | `Pagination-HasNextPage` | `True` | Whether more pages exist |
+
+## Response Headers — Cursor Pagination
+
+When cursor pagination is active, the following headers are added:
+
+| Header | Example | Description |
+|--------|---------|-------------|
+| `X-Pagination-NextCursor` | `abc123` | Opaque token for next page |
+| `X-Pagination-PrevCursor` | `xyz789` | Opaque token for previous page (optional) |
+| `X-Pagination-HasMore` | `True` | Whether more results exist |
+| `X-Pagination-Limit` | `25` | Items per page |
+
+No `TotalCount` header — cursor pagination intentionally avoids `COUNT(*)` queries for performance.
 
 ## Contracts
 
@@ -186,11 +359,25 @@ public record GetProductsRequest : IPaginated, ISortable
 
 ## Pagination Modes
 
-| Mode | Behavior |
-|------|----------|
-| `Required` | Always paginates. Defaults to page 1, size 10 if not specified. |
-| `Optional` | Only paginates when page/size query params are provided. |
-| `NoPagination` | Disabled. Returns all results. |
+`PaginationRequirement` applies to both offset and cursor pagination:
+
+| Mode | Offset Behavior | Cursor Behavior |
+|------|----------------|-----------------|
+| `Required` | Defaults to page 1, size 10 | Defaults to limit 10, first page |
+| `Optional` | Only paginates when page/size provided | Only paginates when cursor/limit provided |
+| `NoPagination` | Disabled. Returns all results. | Disabled. Returns all results. |
+
+## Offset vs Cursor — When to Use Which
+
+| Scenario | Use |
+|----------|-----|
+| Admin dashboard with page numbers | Offset (`PaginationOptions`) |
+| Small-medium datasets (<100k rows) | Offset |
+| Infinite scroll / "load more" | **Cursor** (`CursorPaginationOptions`) |
+| Real-time feeds (social, notifications) | **Cursor** |
+| Large datasets (>100k rows) | **Cursor** |
+| Public API (GitHub/Stripe style) | **Cursor** |
+| Data changes frequently between requests | **Cursor** |
 
 ## Requirements
 

@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>PaginationKit.FastEndpoints</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Author>Vojislav Petkovic</Author>
     <Title>PaginationKit.FastEndpoints</Title>
     <Description>FastEndpoints adapter for PaginationKit. Generic IPreProcessor for automatic pagination extraction from query string.</Description>

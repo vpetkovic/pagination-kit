@@ -9,4 +9,10 @@ public static class HttpContextExtensions
     /// </summary>
     public static PaginationOptions GetPaginationOptions(this HttpContext ctx)
         => (PaginationOptions)ctx.Items[PaginationDefaults.HttpContextItem]!;
+
+    /// <summary>
+    /// Retrieve the CursorPaginationOptions stored by the CursorPaginationFilter from HttpContext.Items.
+    /// </summary>
+    public static CursorPaginationOptions GetCursorPaginationOptions(this HttpContext ctx)
+        => (CursorPaginationOptions)ctx.Items[PaginationDefaults.CursorHttpContextItem]!;
 }
