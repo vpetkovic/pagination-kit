@@ -16,10 +16,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        configuration: [ Release ]
-        dotnet: [ '6.0.x', '7.0.x' ]
 
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +23,10 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ matrix.dotnet }}
+          dotnet-version: |
+            7.0.x
+            8.0.x
+            10.0.x
 
       - name: Determine version
         id: version
@@ -46,14 +45,11 @@ jobs:
       - name: Run tests
         run: dotnet test tests/PaginationKit.Tests/PaginationKit.Tests.csproj --no-restore
 
-      - name: Pack PaginationKit
-        run: dotnet build src/PaginationKit/PaginationKit.csproj --configuration ${{ matrix.configuration }} --output "${{env.DOTNET_ROOT}}/Package" /maxcpucount:1 /p:Version=${{ steps.version.outputs.VERSION }}
-
-      - name: Pack PaginationKit.AspNetCore
-        run: dotnet build src/PaginationKit.AspNetCore/PaginationKit.AspNetCore.csproj --configuration ${{ matrix.configuration }} --output "${{env.DOTNET_ROOT}}/Package" /maxcpucount:1 /p:Version=${{ steps.version.outputs.VERSION }}
-
-      - name: Pack PaginationKit.FastEndpoints
-        run: dotnet build src/PaginationKit.FastEndpoints/PaginationKit.FastEndpoints.csproj --configuration ${{ matrix.configuration }} --output "${{env.DOTNET_ROOT}}/Package" /maxcpucount:1 /p:Version=${{ steps.version.outputs.VERSION }}
+      - name: Pack NuGet packages
+        run: |
+          dotnet pack src/PaginationKit/PaginationKit.csproj --configuration Release --output packages /p:Version=${{ steps.version.outputs.VERSION }}
+          dotnet pack src/PaginationKit.AspNetCore/PaginationKit.AspNetCore.csproj --configuration Release --output packages /p:Version=${{ steps.version.outputs.VERSION }}
+          dotnet pack src/PaginationKit.FastEndpoints/PaginationKit.FastEndpoints.csproj --configuration Release --output packages /p:Version=${{ steps.version.outputs.VERSION }}
 
       - name: Push NuGet packages
-        run: dotnet nuget push "${{ github.workspace }}/packages/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push "packages/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
