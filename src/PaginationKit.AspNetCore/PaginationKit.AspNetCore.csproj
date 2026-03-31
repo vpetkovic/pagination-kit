@@ -13,6 +13,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>pagination;aspnetcore;middleware;filter;dotnet;csharp</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>Vojislav Petkovic</Authors>
+    <PackageIcon>icon.png</PackageIcon>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <IsPackable>true</IsPackable>
     <PackageReleaseNotes>Initial release — PaginationFilter, PaginationHeaders</PackageReleaseNotes>
@@ -31,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="icon.png">
+    <None Include="../../icon.png" Link="icon.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>

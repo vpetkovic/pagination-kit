@@ -13,13 +13,15 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>pagination;paging;queryable;sorting;dotnet;csharp</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>Vojislav Petkovic</Authors>
+    <PackageIcon>icon.png</PackageIcon>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <IsPackable>true</IsPackable>
     <PackageReleaseNotes>Initial release — core pagination options, query extensions, request contracts</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="icon.png">
+    <None Include="../../icon.png" Link="icon.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>

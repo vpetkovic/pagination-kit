@@ -2,6 +2,13 @@ name: Build and Push NuGet Packages
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version (e.g. 1.0.1). Overrides tag-based version.'
+        required: false
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: read
@@ -18,20 +25,31 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=1.0.0" >> $GITHUB_OUTPUT
+          fi
+
       - name: Restore dependencies
         run: dotnet restore PaginationKit.slnx
 
-      - name: Build PaginationKit
-        run: dotnet build src/PaginationKit/PaginationKit.csproj --configuration Release --output "${{ github.workspace }}/packages" --no-restore
-
-      - name: Build PaginationKit.AspNetCore
-        run: dotnet build src/PaginationKit.AspNetCore/PaginationKit.AspNetCore.csproj --configuration Release --output "${{ github.workspace }}/packages" --no-restore
-
-      - name: Build PaginationKit.FastEndpoints
-        run: dotnet build src/PaginationKit.FastEndpoints/PaginationKit.FastEndpoints.csproj --configuration Release --output "${{ github.workspace }}/packages" --no-restore
-
       - name: Run tests
         run: dotnet test tests/PaginationKit.Tests/PaginationKit.Tests.csproj --no-restore
+
+      - name: Pack PaginationKit
+        run: dotnet pack src/PaginationKit/PaginationKit.csproj --configuration Release --output "${{ github.workspace }}/packages" --no-restore /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Pack PaginationKit.AspNetCore
+        run: dotnet pack src/PaginationKit.AspNetCore/PaginationKit.AspNetCore.csproj --configuration Release --output "${{ github.workspace }}/packages" --no-restore /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Pack PaginationKit.FastEndpoints
+        run: dotnet pack src/PaginationKit.FastEndpoints/PaginationKit.FastEndpoints.csproj --configuration Release --output "${{ github.workspace }}/packages" --no-restore /p:Version=${{ steps.version.outputs.VERSION }}
 
       - name: Push NuGet packages
         run: dotnet nuget push "${{ github.workspace }}/packages/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
