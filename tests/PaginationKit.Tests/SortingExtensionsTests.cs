@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using PaginationKit.Extensions;
 
 namespace PaginationKit.Tests;
@@ -19,9 +19,9 @@ public class SortingExtensionsTests
     {
         var result = _source.OrderBy("name").ToList();
 
-        result[0].Name.Should().Be("Alice");
-        result[1].Name.Should().Be("Bob");
-        result[2].Name.Should().Be("Charlie");
+        result[0].Name.ShouldBe("Alice");
+        result[1].Name.ShouldBe("Bob");
+        result[2].Name.ShouldBe("Charlie");
     }
 
     [Fact]
@@ -29,9 +29,9 @@ public class SortingExtensionsTests
     {
         var result = _source.OrderBy("-name").ToList();
 
-        result[0].Name.Should().Be("Charlie");
-        result[1].Name.Should().Be("Bob");
-        result[2].Name.Should().Be("Alice");
+        result[0].Name.ShouldBe("Charlie");
+        result[1].Name.ShouldBe("Bob");
+        result[2].Name.ShouldBe("Alice");
     }
 
     [Fact]
@@ -46,9 +46,9 @@ public class SortingExtensionsTests
 
         var result = items.OrderBy("name,-date").ToList();
 
-        result[0].Id.Should().Be(1); // Alice, 2024-02 (desc date)
-        result[1].Id.Should().Be(2); // Alice, 2024-01
-        result[2].Id.Should().Be(3); // Bob
+        result[0].Id.ShouldBe(1); // Alice, 2024-02 (desc date)
+        result[1].Id.ShouldBe(2); // Alice, 2024-01
+        result[2].Id.ShouldBe(3); // Bob
     }
 
     [Fact]
@@ -56,13 +56,13 @@ public class SortingExtensionsTests
     {
         var result = _source.OrderBy("NAME").ToList();
 
-        result[0].Name.Should().Be("Alice");
+        result[0].Name.ShouldBe("Alice");
     }
 
     [Fact]
     public void OrderBy_EmptyString_NoChange()
     {
         var result = _source.OrderBy("").ToList();
-        result[0].Id.Should().Be(3); // original order preserved
+        result[0].Id.ShouldBe(3); // original order preserved
     }
 }
